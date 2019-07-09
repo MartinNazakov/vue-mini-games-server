@@ -2,8 +2,11 @@ var express = require('express');
 var cors = require('cors');
 var bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-var app = express();
 
+// routes
+var usersRoute = require('./routes/Users');
+
+var app = express();
 var port = process.env.port || 5000;
 
 app.use(bodyParser.json());
@@ -21,10 +24,6 @@ mongoose.connect(
     {useNewUrlParser: true}
 ).then(() => console.log('MongoDB Connected'))
 .catch(err => console.log(err))
-
-var Users = require('./routes/Users')
-
-app.use('/users', Users);
 
 app.listen(port, function() {
     console.log('Server is running on port: ' + port);

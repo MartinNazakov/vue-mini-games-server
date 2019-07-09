@@ -1,5 +1,5 @@
 const express = require('express');
-const registerRoute = express.Router();
+const users = express.Router();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 
@@ -8,17 +8,18 @@ users.use(cors());
 
 process.env.SECRET_KEY = 'vuejs';
 
-registerRoute.post('/register', (req, res) => {
+users.post('/register', (req, res) => {
     const userData = {
         username: req.body.username,
         password: req.body.password
     }
+
+    User.findOne({
+        username: req.body.username
+    }).then(user => {
+        if (!user) {
+    
+        }
+    })
 });
 
-User.findOne({
-    username: req.body.username
-}).then(user => {
-    if (!user) {
-
-    }
-})
