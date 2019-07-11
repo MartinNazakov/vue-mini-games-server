@@ -24,7 +24,7 @@ users.post('/register', (req, res) => {
                 userData.password = hash;
                 User.create(userData)
                     .then(user => {
-                        res.json({
+                        return res.json({
                             message: user.username + ' successfully registered!',
                         })
                     }).catch(err => {
@@ -33,11 +33,12 @@ users.post('/register', (req, res) => {
                         })
                     })
             })
+        } else {
+            // if user is already registered
+            return res.status(409).json({
+                message: 'Username ' + req.body.username + ' is already taken!'
+            })
         }
-        // if user is already registered
-        return res.status(409).json({
-            message: 'Username ' + req.body.username + ' is already taken!'
-        })
     }).catch(err => {
         return res.status(500).json({
             message: 'Internal server error ' + err
@@ -53,16 +54,21 @@ users.post('/login', (req, res) => {
             // check if passwords match
             if (bcrypt.compareSync(req.body.password, user.password)) {
                 // generate token
-                let token = jwt.sign({}, process.env.SECRET_KEY, {
+                let token = jwt.sign({
+                    username: user.username
+                }, process.env.SECRET_KEY, {
                     expiresIn: 1440
-                })
+                });
 
-                res.json({
+                return res.json({
+                    auth: true,
                     token: token
                 });
             }
             // incorrect password
-            return res.status(404).json({
+            return res.status(401).json({
+                auth: false,
+                token: null,
                 message: 'Incorrect password!'
             });
         }
