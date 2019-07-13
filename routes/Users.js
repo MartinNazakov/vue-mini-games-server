@@ -3,6 +3,7 @@ const users = express.Router();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const validateToken = require('../utils/utils').validateToken;
 
 const User = require('../models/User');
 users.use(cors());
@@ -61,13 +62,12 @@ users.post('/login', (req, res) => {
                 });
 
                 return res.json({
-                    auth: true,
-                    token: token
+                    token: token,
+                    username: user.username
                 });
             }
             // incorrect password
             return res.status(401).json({
-                auth: false,
                 token: null,
                 message: 'Incorrect password!'
             });
@@ -80,6 +80,13 @@ users.post('/login', (req, res) => {
         return res.status(500).json({
             message: 'Internal server error ' + err
         })
+    })
+})
+
+users.get('/test', function(req, res) {
+    console.log(req.headers);
+    return res.status(500).json({
+        message: 'Internal server error '
     })
 })
 
