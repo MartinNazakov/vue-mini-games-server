@@ -9,10 +9,16 @@ const UserSchema = new Schema({
         type: String
     },
     email: {
-        type: String
+        type: String,
+        default: ''
     },
     birthDate: {
-        type: Date
+        type: Date,
+        default: ''
+    },
+    wins: {
+        type: Number,
+        default: 0
     }
 });
 

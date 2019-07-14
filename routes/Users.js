@@ -23,6 +23,7 @@ users.post('/register', (req, res) => {
             // hash the password before storing it
             bcrypt.hash(req.body.password, 10, (err, hash) => {
                 userData.password = hash;
+
                 User.create(userData)
                     .then(user => {
                         return res.json({
@@ -89,21 +90,24 @@ users.get('/user', function (req, res) {
     if (token) {
         const decoded = decodeToken(token);
 
-        var decodedUsername = decoded.username;
-        User.findOne({
-            username: decodedUsername
-        }).then(function (user) {
-            const parsedDate = user.birthDate.toISOString().substr(0, 10)
-            return res.json({
-                username: user.username,
-                email: user.email,
-                birthDate: parsedDate
+        var decodedUsername = (decoded) ? decoded.username : '';
+        console.log(decodedUsername);
+        if (decodedUsername) {
+            User.findOne({
+                username: decodedUsername
+            }).then(function (user) {
+                const parsedDate = (user.birthDate) ? user.birthDate.toISOString().substr(0, 10) : '';
+                return res.json({
+                    username: user.username,
+                    email: user.email,
+                    birthDate: parsedDate
+                })
+            }).catch(err => {
+                return res.status(500).json({
+                    message: 'Internal server error '
+                })
             })
-        }).catch(err => {
-            return res.status(500).json({
-                message: 'Internal server error '
-            })
-        })
+        }
     } else {
         return res.status(401).send({
             message: 'unauthorized'
@@ -127,9 +131,9 @@ users.post('/updateInfo', function (req, res) {
                 username: decodedUsername
             }, userData).then(function (result) {
                 if (result.ok === 1) {
-                    return res.status(200);
+                    return res.sendStatus(200);
                 } else {
-                    res.status(304);
+                    res.sendStatus(304);
                 }
             }).catch(err => {
                 return res.status(500).json({
@@ -142,6 +146,29 @@ users.post('/updateInfo', function (req, res) {
             message: 'unauthorized'
         });
     }
+})
+
+users.get('/rankings', function (req, res) {
+
+    User.find({}, {
+        username: 1,
+        wins: 1
+    }).limit(20).sort({
+        wins: -1
+    }).then(function (users) {
+        console.log(users)
+        const usersData = users.map(user => {
+            return {
+                username: user.username,
+                wins: user.wins
+            }
+        })
+        return res.json(usersData)
+    }).catch(err => {
+        return res.status(500).json({
+            message: 'Internal server error '
+        })
+    })
 })
 
 function decodeToken(token) {
