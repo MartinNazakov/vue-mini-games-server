@@ -83,11 +83,75 @@ users.post('/login', (req, res) => {
     })
 })
 
-users.get('/test', function(req, res) {
-    console.log(req.headers);
-    return res.status(500).json({
-        message: 'Internal server error '
-    })
+users.get('/user', function (req, res) {
+    const token = req.headers.authorization;
+
+    if (token) {
+        const decoded = decodeToken(token);
+
+        var decodedUsername = decoded.username;
+        User.findOne({
+            username: decodedUsername
+        }).then(function (user) {
+            const parsedDate = user.birthDate.toISOString().substr(0, 10)
+            return res.json({
+                username: user.username,
+                email: user.email,
+                birthDate: parsedDate
+            })
+        }).catch(err => {
+            return res.status(500).json({
+                message: 'Internal server error '
+            })
+        })
+    } else {
+        return res.status(401).send({
+            message: 'unauthorized'
+        });
+    }
 })
+
+users.post('/updateInfo', function (req, res) {
+    const token = req.headers.authorization;
+
+    if (token) {
+        const decoded = decodeToken(token);
+        var decodedUsername = (decoded) ? decoded.username : '';
+
+        if (decodedUsername) {
+
+            const userData = req.body;
+            console.log(decodedUsername);
+            console.log(userData);
+            User.updateOne({
+                username: decodedUsername
+            }, userData).then(function (result) {
+                if (result.ok === 1) {
+                    return res.status(200);
+                } else {
+                    res.status(304);
+                }
+            }).catch(err => {
+                return res.status(500).json({
+                    message: 'Internal server error '
+                })
+            })
+        }
+    } else {
+        return res.status(401).send({
+            message: 'unauthorized'
+        });
+    }
+})
+
+function decodeToken(token) {
+    var decoded;
+    try {
+        decoded = jwt.verify(token, process.env.SECRET_KEY);
+    } catch (e) {
+        decoded = null
+    }
+    return decoded;
+}
 
 module.exports = users;

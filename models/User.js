@@ -7,6 +7,12 @@ const UserSchema = new Schema({
     },
     password: {
         type: String
+    },
+    email: {
+        type: String
+    },
+    birthDate: {
+        type: Date
     }
 });
 
