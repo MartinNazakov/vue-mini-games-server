@@ -156,7 +156,6 @@ users.get('/rankings', function (req, res) {
     }).limit(20).sort({
         wins: -1
     }).then(function (users) {
-        console.log(users)
         const usersData = users.map(user => {
             return {
                 username: user.username,
