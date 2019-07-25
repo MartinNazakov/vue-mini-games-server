@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 
 // routes
 var usersRoute = require('./routes/Users');
+var lobbiesRoute = require('./routes/Lobbies');
 
 var app = express();
 var port = process.env.port || 5000;
@@ -28,6 +29,7 @@ mongoose.connect(
 .catch(err => console.log(err))
 
 app.use('/users', usersRoute)
+app.use('/lobbies', lobbiesRoute)
 
 app.listen(port, function() {
     console.log('Server is running on port: ' + port);

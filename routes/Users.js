@@ -59,7 +59,7 @@ users.post('/login', (req, res) => {
                 let token = jwt.sign({
                     username: user.username
                 }, process.env.SECRET_KEY, {
-                    expiresIn: 1440
+                    expiresIn: '24h'
                 });
 
                 return res.json({
@@ -84,14 +84,13 @@ users.post('/login', (req, res) => {
     })
 })
 
-users.get('/user', function (req, res) {
+users.get('/user', validateToken, function (req, res) {
     const token = req.headers.authorization;
 
     if (token) {
         const decoded = decodeToken(token);
-
         var decodedUsername = (decoded) ? decoded.username : '';
-        console.log(decodedUsername);
+
         if (decodedUsername) {
             User.findOne({
                 username: decodedUsername
@@ -115,7 +114,7 @@ users.get('/user', function (req, res) {
     }
 })
 
-users.post('/updateInfo', function (req, res) {
+users.post('/updateInfo', validateToken, function (req, res) {
     const token = req.headers.authorization;
 
     if (token) {
