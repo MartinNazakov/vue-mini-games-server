@@ -88,12 +88,11 @@ users.get('/user', validateToken, function (req, res) {
     const token = req.headers.authorization;
 
     if (token) {
-        const decoded = decodeToken(token);
-        var decodedUsername = (decoded) ? decoded.username : '';
+        const username = req.query.username;
 
-        if (decodedUsername) {
+        if (username) {
             User.findOne({
-                username: decodedUsername
+                username: username
             }).then(function (user) {
                 const parsedDate = (user.birthDate) ? user.birthDate.toISOString().substr(0, 10) : '';
                 return res.json({
@@ -106,6 +105,10 @@ users.get('/user', validateToken, function (req, res) {
                     message: 'Internal server error '
                 })
             })
+        } else {
+            return res.status(400).json({
+                message: 'User not found!'
+            })
         }
     } else {
         return res.status(401).send({
@@ -116,30 +119,23 @@ users.get('/user', validateToken, function (req, res) {
 
 users.post('/updateInfo', validateToken, function (req, res) {
     const token = req.headers.authorization;
+    const username = req.query.username;
 
     if (token) {
-        const decoded = decodeToken(token);
-        var decodedUsername = (decoded) ? decoded.username : '';
-
-        if (decodedUsername) {
-
-            const userData = req.body;
-            console.log(decodedUsername);
-            console.log(userData);
-            User.updateOne({
-                username: decodedUsername
-            }, userData).then(function (result) {
-                if (result.ok === 1) {
-                    return res.sendStatus(200);
-                } else {
-                    res.sendStatus(304);
-                }
-            }).catch(err => {
-                return res.status(500).json({
-                    message: 'Internal server error '
-                })
+        const userData = req.body;
+        User.updateOne({
+            username: username
+        }, userData).then(function (result) {
+            if (result.ok === 1) {
+                return res.sendStatus(200);
+            } else {
+                res.sendStatus(304);
+            }
+        }).catch(err => {
+            return res.status(500).json({
+                message: 'Internal server error '
             })
-        }
+        })
     } else {
         return res.status(401).send({
             message: 'unauthorized'
@@ -168,15 +164,5 @@ users.get('/rankings', function (req, res) {
         })
     })
 })
-
-function decodeToken(token) {
-    var decoded;
-    try {
-        decoded = jwt.verify(token, process.env.SECRET_KEY);
-    } catch (e) {
-        decoded = null
-    }
-    return decoded;
-}
 
 module.exports = users;

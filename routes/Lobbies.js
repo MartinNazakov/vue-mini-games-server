@@ -1,38 +1,39 @@
 const express = require('express');
 const lobbies = express.Router();
 const cors = require('cors');
-const jwt = require('jsonwebtoken');
 const validateToken = require('../utils/utils').validateToken;
 
 const Lobby = require('../models/Lobby');
 lobbies.use(cors());
 
-process.env.SECRET_KEY = 'vuejs';
 
-lobbies.post('/create', validateToken, (req, res) => {
-    const lobbyData = req.body;
-    console.log(lobbyData);
-    
-    Lobby.create(lobbyData)
-        .then(createdLobby => {
-            return res.json({
-                lobbyData: createdLobby
-            });
+lobbies.get('/', validateToken, function (req, res) {
+    const token = req.headers.authorization;
+    if (token) {
+
+        const gameType = req.query.gameType;
+
+        Lobby.find({
+            gameType: gameType
+        }).then(function (lobbies) {
+            if (lobbies && lobbies.length > 0) {
+                return res.json(lobbies)
+            } else {
+                return res.status(404).send({
+                    message: 'No lobbies found!'
+                });
+            }
+
         }).catch(err => {
             return res.status(500).json({
-                message: 'Internal server error ' + err
+                message: 'Internal server error '
             })
         })
-});
-
-function decodeToken(token) {
-    var decoded;
-    try {
-        decoded = jwt.verify(token, process.env.SECRET_KEY);
-    } catch (e) {
-        decoded = null
+    } else {
+        return res.status(401).send({
+            message: 'unauthorized'
+        });
     }
-    return decoded;
-}
+})
 
 module.exports = lobbies;
