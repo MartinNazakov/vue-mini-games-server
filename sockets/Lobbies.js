@@ -4,6 +4,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 
 const Lobby = require('../models/Lobby');
+const TicTacToe = require('../models/games/TicTacToe');
 lobbies.use(cors());
 
 module.exports = function (socket, io) {
@@ -48,7 +49,6 @@ module.exports = function (socket, io) {
     });
 
     socket.on("joinLobby", function (data) {
-        console.log(data);
         const lobbyId = data.lobbyId;
         const user = data.user;
         if (lobbyId) {
@@ -61,14 +61,16 @@ module.exports = function (socket, io) {
                     const id = lobby.id;
                     const maxPlayers = lobby.maxPlayers;
                     const currentConnections = (socket.adapter.rooms[id]) ? socket.adapter.rooms[id].length : null;
-                    console.log(currentConnections);
-                    console.log(maxPlayers);
+
                     if (currentConnections && maxPlayers > currentConnections) {
                         socket.join(id);
                         console.log('JOIN: Joined ID ' + lobbyId);
+                        socket.emit('setLobby', lobby);
+                        io.in(id).emit('joinUser', user);
                     }
-                    socket.emit('setLobby', lobby);
-                    io.in(id).emit('joinUser', user);
+                    else {
+                        socket.emit('lobbyFull');
+                    }
                 }
             });
         }
@@ -82,4 +84,32 @@ module.exports = function (socket, io) {
         socket.leave(lobbyId);
         console.log('LEAVE: Left ID ' + lobbyId);
     });
+
+    socket.on("startGame", function (data) {
+        const gameType = data.gameType;
+        const lobbyId = data.lobbyId;
+        const players = data.players;
+        var game;
+        switch (gameType) {
+            case "TicTacToe":
+                // create the game
+                game = new TicTacToe();
+                game.players = players;
+                game.save(function (err, game) {
+                    if (err) {
+                        console.log(err);
+                    } else {
+                        io.in(lobbyId).emit('startGame', game);
+                        console.log('CREATE: TicTacToe game created! ' + game);
+                    }
+                });
+        }
+    });
+
+    socket.on('joinGameRoom', function(data) {
+        const id = data.id;
+        socket.join(id);
+
+        socket.emit('goToGame');
+    })
 };
