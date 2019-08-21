@@ -67,8 +67,7 @@ module.exports = function (socket, io) {
                         console.log('JOIN: Joined ID ' + lobbyId);
                         socket.emit('setLobby', lobby);
                         io.in(id).emit('joinUser', user);
-                    }
-                    else {
+                    } else {
                         socket.emit('lobbyFull');
                     }
                 }
@@ -89,12 +88,20 @@ module.exports = function (socket, io) {
         const gameType = data.gameType;
         const lobbyId = data.lobbyId;
         const players = data.players;
+
         var game;
         switch (gameType) {
             case "TicTacToe":
                 // create the game
                 game = new TicTacToe();
                 game.players = players;
+
+                // generate a random player to start the game
+                var firstPlayerIndex = Math.round(Math.random());
+                console.log(firstPlayerIndex);
+                
+                game.currentPlayerTurn = players[firstPlayerIndex];
+                
                 game.save(function (err, game) {
                     if (err) {
                         console.log(err);
@@ -106,7 +113,7 @@ module.exports = function (socket, io) {
         }
     });
 
-    socket.on('joinGameRoom', function(data) {
+    socket.on('joinGameRoom', function (data) {
         const id = data.id;
         socket.join(id);
 

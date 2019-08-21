@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const defaultBoard = [
-    ['x', '', ''],
-    ['', 'o', 'x'],
+    ['', '', ''],
+    ['', '', ''],
     ['', '', '']
 ]
 
@@ -17,6 +17,10 @@ const TicTacToeSchema = new Schema({
     currentPlayerTurn: {
         type: String,
         default: ""
+    },
+    currentPlayerSymbol: {
+        type: String,
+        default: "X"
     },
     board: {
         type: [[String]],

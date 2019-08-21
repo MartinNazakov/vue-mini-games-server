@@ -43,5 +43,6 @@ app.use('/lobbies', lobbiesRoute)
 io.on("connection", function (socket) {
     console.log("Socket Connection Established with ID :" + socket.id)
     require('./sockets/Lobbies')(socket, io);
+    require('./sockets/TicTacToe')(socket, io);
 })
 // Socket Connection END --
