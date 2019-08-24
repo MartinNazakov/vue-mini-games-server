@@ -20,59 +20,70 @@ module.exports = function (socket, io) {
             }).then(function (game) {
                 const newGame = game
                 const currentSymbol = game.currentPlayerSymbol;
-                game.board[x][y] = currentSymbol;
-
-                if (checkWinner(game.board)) {
-                    const winner = game.currentPlayerTurn;
-
-                    User.findOne({
-                        username: winner
-                    }).then(function (user) {
-                        var wins = user.wins;
-                        wins++;
-                        console.log(user.username);
-                        User.updateOne({
-                            username: user.username
-                        }, {
-                            wins: wins
-                        }).then(function () {
-                            io.in(id).emit('winner', winner);
-                        })
-                    })
+                // check if field has already been occupied
+                if (game.board[x][y] !== '') {
+                    socket.emit('illegalMove');
                 } else {
-                    var newSymbol;
+                    game.board[x][y] = currentSymbol;
 
-                    if (currentSymbol === 'X') {
-                        newSymbol = 'O'
+                    if (checkWinner(game.board)) {
+                        const winner = game.currentPlayerTurn;
+
+                        User.findOne({
+                            username: winner
+                        }).then(function (user) {
+                            var wins = user.wins;
+                            wins++;
+                            console.log(user.username);
+                            User.updateOne({
+                                username: user.username
+                            }, {
+                                wins: wins
+                            }).then(function () {
+                                io.in(id).emit('winner', winner);
+                            })
+                        })
+                    } else if (!isEmptyFieldPresent(game.board)) {
+                        io.in(id).emit('noWinner');
                     } else {
-                        newSymbol = 'X'
+                        var newSymbol;
+
+                        if (currentSymbol === 'X') {
+                            newSymbol = 'O'
+                        } else {
+                            newSymbol = 'X'
+                        }
+
+                        const currentPlayerIndex = game.players.indexOf(game.currentPlayerTurn);
+
+                        const nextPlayerIndex = (currentPlayerIndex === 0) ? 1 : 0;
+                        const newPlayerTurn = game.players[nextPlayerIndex];
+
+                        newGame.board = game.board;
+                        newGame.currentPlayerSymbol = newSymbol;
+                        newGame.currentPlayerTurn = newPlayerTurn;
+
+                        TicTacToe.updateOne({
+                            id: id,
+                            currentPlayerSymbol: newSymbol,
+                            currentPlayerTurn: newPlayerTurn,
+                            board: game.board
+
+                        }).then(function () {
+                            io.in(id).emit('makeMove', newGame);
+                        })
                     }
-
-                    const currentPlayerIndex = game.players.indexOf(game.currentPlayerTurn);
-
-                    const nextPlayerIndex = (currentPlayerIndex === 0) ? 1 : 0;
-                    const newPlayerTurn = game.players[nextPlayerIndex];
-
-                    newGame.board = game.board;
-                    newGame.currentPlayerSymbol = newSymbol;
-                    newGame.currentPlayerTurn = newPlayerTurn;
-
-                    TicTacToe.updateOne({
-                        id: id,
-                        currentPlayerSymbol: newSymbol,
-                        currentPlayerTurn: newPlayerTurn,
-                        board: game.board
-
-                    }).then(function () {
-                        io.in(id).emit('makeMove', newGame);
-                    })
                 }
-
             }).catch(err => {
                 console.log(err);
             })
         }
     });
+
+    function isEmptyFieldPresent(board) {
+        // lastly, if there is no winner - check if the whole board has been occupied
+        return board.some(row => row.includes(''));
+    }
 
     function checkWinner(board) {
         for (var i = 0; i < board.length; i++) {
